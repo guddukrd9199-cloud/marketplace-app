@@ -1,16 +1,13 @@
 const express = require('express');
+const router = express.Router();
 const db = require('../config/db');
 const { verifyToken, verifyRole } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
-const router = express.Router();
-
-// GET all products (public)
+// GET all approved products (public)
 router.get('/', (req, res) => {
   try {
-    const products = db.prepare(
-      "SELECT * FROM products WHERE status = 'approved'"
-    ).all();
+    const products = db.prepare("SELECT * FROM products WHERE status = 'approved'").all();
     res.json(products);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -20,79 +17,70 @@ router.get('/', (req, res) => {
 // GET seller's own products
 router.get('/my/list', verifyToken, verifyRole('seller'), (req, res) => {
   try {
-    const products = db.prepare(
-      'SELECT * FROM products WHERE seller_id = ?'
-    ).all(req.user.id);
+    const products = db.prepare("SELECT * FROM products WHERE seller_id = ?").all(req.user.id);
     res.json(products);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET single product by id (public)
+// GET single product with images
 router.get('/:id', (req, res) => {
   try {
-    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
+    const product = db.prepare("SELECT * FROM products WHERE id = ?").get(req.params.id);
     if (!product) {
       return res.status(404).json({ error: 'Product nahi mila' });
     }
-    const images = db.prepare('SELECT * FROM product_images WHERE product_id = ?').all(req.params.id);
-    res.json({ ...product, images });
+    const images = db.prepare("SELECT * FROM product_images WHERE product_id = ?").all(req.params.id);
+    product.images = images;
+    res.json(product);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// CREATE product
-router.post('/', verifyToken, verifyRole('seller'), (req, res) => {
+// POST create product WITH image (ek saath)
+router.post('/', verifyToken, verifyRole('seller'), upload.single('image'), (req, res) => {
   try {
-    const { name, category_id, description, price, stock, condition, location } = req.body;
+    const { title, description, price, location } = req.body;
 
-    if (!name || !price) {
-      return res.status(400).json({ error: 'Product name aur price zaroori hai' });
+    const result = db.prepare(
+      "INSERT INTO products (title, description, price, location, seller_id, status) VALUES (?, ?, ?, ?, ?, 'pending')"
+    ).run(title, description, price, location, req.user.id);
+
+    const productId = result.lastInsertRowid;
+
+    // Agar image aayi hai to usko bhi save karo
+    if (req.file) {
+      const imagePath = '/uploads/' + req.file.filename;
+      db.prepare(
+        "INSERT INTO product_images (product_id, image_path) VALUES (?, ?)"
+      ).run(productId, imagePath);
     }
 
-    const insert = db.prepare(
-      `INSERT INTO products (seller_id, category_id, name, description, price, stock, condition, location, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`
-    );
-    const result = insert.run(
-      req.user.id, category_id || null, name, description || '', price, stock || 0, condition || '', location || ''
-    );
-
-    res.status(201).json({ message: 'Product add ho gaya, admin approval ka wait hai', productId: result.lastInsertRowid });
+    res.json({ message: 'Product create ho gaya', productId });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// UPLOAD image for a product
+// POST upload additional image (alag se, agar chahiye to)
 router.post('/:id/upload-image', verifyToken, verifyRole('seller'), upload.single('image'), (req, res) => {
   try {
-    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-    if (!product) {
-      return res.status(404).json({ error: 'Product nahi mila' });
-    }
-    if (product.seller_id !== req.user.id) {
-      return res.status(403).json({ error: 'Ye tumhara product nahi hai' });
-    }
-    if (!req.file) {
-      return res.status(400).json({ error: 'Image file zaroori hai' });
-    }
-
     const imagePath = '/uploads/' + req.file.filename;
-    db.prepare('INSERT INTO product_images (product_id, image_path) VALUES (?, ?)').run(req.params.id, imagePath);
-
-    res.json({ message: 'Image upload ho gayi', imagePath });
+    db.prepare(
+      "INSERT INTO product_images (product_id, image_path) VALUES (?, ?)"
+    ).run(req.params.id, imagePath);
+    res.json({ message: 'Image upload ho gayi', path: imagePath });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// UPDATE product
+// PUT update product
 router.put('/:id', verifyToken, verifyRole('seller'), (req, res) => {
   try {
-    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
+    const product = db.prepare("SELECT * FROM products WHERE id = ?").get(req.params.id);
     if (!product) {
       return res.status(404).json({ error: 'Product nahi mila' });
     }
@@ -100,21 +88,10 @@ router.put('/:id', verifyToken, verifyRole('seller'), (req, res) => {
       return res.status(403).json({ error: 'Ye tumhara product nahi hai' });
     }
 
-    const { name, category_id, description, price, stock, condition, location } = req.body;
-
+    const { title, description, price, location } = req.body;
     db.prepare(
-      `UPDATE products SET name = ?, category_id = ?, description = ?, price = ?, stock = ?, condition = ?, location = ?
-       WHERE id = ?`
-    ).run(
-      name || product.name,
-      category_id || product.category_id,
-      description || product.description,
-      price || product.price,
-      stock ?? product.stock,
-      condition || product.condition,
-      location || product.location,
-      req.params.id
-    );
+      "UPDATE products SET title = ?, description = ?, price = ?, location = ? WHERE id = ?"
+    ).run(title, description, price, location, req.params.id);
 
     res.json({ message: 'Product update ho gaya' });
   } catch (err) {
@@ -125,7 +102,7 @@ router.put('/:id', verifyToken, verifyRole('seller'), (req, res) => {
 // DELETE product
 router.delete('/:id', verifyToken, verifyRole('seller'), (req, res) => {
   try {
-    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
+    const product = db.prepare("SELECT * FROM products WHERE id = ?").get(req.params.id);
     if (!product) {
       return res.status(404).json({ error: 'Product nahi mila' });
     }
@@ -133,7 +110,7 @@ router.delete('/:id', verifyToken, verifyRole('seller'), (req, res) => {
       return res.status(403).json({ error: 'Ye tumhara product nahi hai' });
     }
 
-    db.prepare('DELETE FROM products WHERE id = ?').run(req.params.id);
+    db.prepare("DELETE FROM products WHERE id = ?").run(req.params.id);
     res.json({ message: 'Product delete ho gaya' });
   } catch (err) {
     res.status(500).json({ error: err.message });

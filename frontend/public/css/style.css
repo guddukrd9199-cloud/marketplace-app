@@ -1,0 +1,111 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+.navbar {
+  background-color: #2c7be5;
+  color: white;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.navbar h1 {
+  font-size: 1.4rem;
+}
+
+.navbar nav a {
+  color: white;
+  text-decoration: none;
+  margin-left: 15px;
+  font-size: 0.95rem;
+}
+
+main {
+  padding: 20px;
+}
+
+main h2 {
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.product-card {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.product-card h3 {
+  font-size: 1rem;
+  margin-bottom: 5px;
+}
+
+.product-card p {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.product-card .price {
+  color: #2c7be5;
+  font-weight: bold;
+  font-size: 1.05rem;
+}
+----------------------------------------------------------------------------------
+
+.auth-form {
+  background: white;
+  max-width: 350px;
+  margin: 0 auto;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-form input,
+.auth-form select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 0.95rem;
+}
+
+.auth-form button {
+  background-color: #2c7be5;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.auth-form button:hover {
+  background-color: #1a5bb8;
+}
+
+.auth-form label {
+  font-size: 0.9rem;
+  color: #555;
+}

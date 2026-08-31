@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seller Dashboard - Marketplace</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="navbar">
+    <h1>🛒 Marketplace</h1>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/login.html">Login</a>
+      <a href="/register.html">Register</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Naya Product Add Karo</h2>
+    <form id="product-form" class="auth-form">
+      <input type="text" id="name" placeholder="Product Naam" required>
+      <textarea id="description" placeholder="Description" rows="3"></textarea>
+      <input type="number" id="price" placeholder="Price (₹)" required>
+      <input type="number" id="stock" placeholder="Stock (kitne piece hain)" value="1">
+      <input type="text" id="condition" placeholder="Condition (jaise: new, used)">
+      <input type="text" id="location" placeholder="Location (jaise: Delhi)">
+      <button type="submit">Product Add Karo</button>
+      <p id="message"></p>
+    </form>
+
+    <h2 style="margin-top:30px;">Mere Products</h2>
+    <div id="my-products" class="product-grid">
+      <p>Loading...</p>
+    </div>
+  </main>
+
+  <script src="/js/navbar.js"></script>
+  <script src="/js/seller-dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart - Marketplace</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="navbar">
+    <h1>🛒 Marketplace</h1>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/login.html">Login</a>
+      <a href="/register.html">Register</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Mera Cart</h2>
+    <div id="cart-items">
+      <p>Loading...</p>
+    </div>
+
+    <h3 id="cart-total" style="margin-top:15px;"></h3>
+
+    <div style="margin-top:15px;">
+      <input type="text" id="address" placeholder="Delivery Address" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:5px;">
+      <button onclick="checkout()" style="background:green;color:white;border:none;padding:12px;border-radius:5px;margin-top:10px;width:100%;">Order Place Karo</button>
+    </div>
+    <p id="message" style="margin-top:10px;"></p>
+  </main>
+
+  <script src="/js/navbar.js"></script>
+  <script src="/js/cart.js"></script>
+</body>
+</html>
+

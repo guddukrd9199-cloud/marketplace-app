@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - Marketplace</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="navbar">
+    <h1>🛒 Marketplace</h1>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/login.html">Login</a>
+      <a href="/register.html">Register</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Naya Account Banao</h2>
+    <form id="register-form" class="auth-form">
+      <input type="text" id="name" placeholder="Poora Naam" required>
+      <input type="email" id="email" placeholder="Email" required>
+      <input type="password" id="password" placeholder="Password" required>
+
+      <label>Account Type:</label>
+      <select id="role">
+        <option value="buyer">Buyer (Khareedne ke liye)</option>
+        <option value="seller">Seller (Bechne ke liye)</option>
+      </select>
+
+      <button type="submit">Register Karo</button>
+      <p id="message"></p>
+    </form>
+  </main>
+
+  <script src="/js/navbar.js"></script>
+  <script src="/js/register.js"></script>
+</body>
+</html>

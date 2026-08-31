@@ -51,7 +51,7 @@ router.post("/", verifyToken, verifyRole("seller"), upload.single("image"), asyn
     );
     const productId = result.rows[0].id;
     if (req.file) {
-      const imagePath = "/uploads/" + req.file.filename;
+      const imagePath = req.file.path;
       await db.query(
         "INSERT INTO product_images (product_id, image_path) VALUES ($1, $2)",
         [productId, imagePath]
@@ -65,7 +65,7 @@ router.post("/", verifyToken, verifyRole("seller"), upload.single("image"), asyn
 
 router.post("/:id/upload-image", verifyToken, verifyRole("seller"), upload.single("image"), async (req, res) => {
   try {
-    const imagePath = "/uploads/" + req.file.filename;
+    const imagePath = req.file.path;
     await db.query(
       "INSERT INTO product_images (product_id, image_path) VALUES ($1, $2)",
       [req.params.id, imagePath]

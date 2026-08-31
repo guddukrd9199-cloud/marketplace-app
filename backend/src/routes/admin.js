@@ -33,6 +33,17 @@ router.put("/products/:id/reject", verifyToken, verifyRole("admin"), async (req,
   }
 });
 
+// DELETE product (admin only) - kisi bhi seller ka product delete kar sakta hai
+router.delete("/products/:id", verifyToken, verifyRole("admin"), async (req, res) => {
+  try {
+    await db.query("DELETE FROM product_images WHERE product_id = $1", [req.params.id]);
+    await db.query("DELETE FROM products WHERE id = $1", [req.params.id]);
+    res.json({ message: "Product delete ho gaya" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET all users (admin only)
 router.get("/users", verifyToken, verifyRole("admin"), async (req, res) => {
   try {

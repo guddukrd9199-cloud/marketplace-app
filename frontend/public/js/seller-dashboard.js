@@ -105,17 +105,44 @@ async function loadMyOrders() {
       div.style.padding = "10px";
       div.style.marginBottom = "10px";
 
+      const completeButton = o.order_status !== "completed"
+        ? `<button onclick="markCompleted(${o.order_id})" style="background:green;color:white;border:none;padding:8px;border-radius:5px;margin-top:8px;width:100%;">Completed Mark Karo</button>`
+        : `<p style="color:green;font-weight:bold;">✔ Completed</p>`;
+
       div.innerHTML = `
         <strong>${o.product_name}</strong> x ${o.quantity} <br>
         Price: ₹${o.price} <br>
         Order Status: ${o.order_status} <br>
         Address: ${o.address || 'N/A'} <br>
         Order Date: ${new Date(o.created_at).toLocaleDateString()}
+        ${completeButton}
       `;
       container.appendChild(div);
     });
   } catch (err) {
     document.getElementById("myOrders").innerHTML = "<p>Orders load nahi ho paye.</p>";
+  }
+}
+
+async function markCompleted(orderId) {
+  try {
+    const res = await fetch(`/api/orders/${orderId}/status`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ status: "completed" })
+    });
+
+    if (res.ok) {
+      alert("Order completed mark ho gaya!");
+      loadMyOrders();
+    } else {
+      alert("Kuch galat ho gaya");
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
   }
 }
 

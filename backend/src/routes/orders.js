@@ -44,7 +44,6 @@ router.post("/checkout", verifyToken, async (req, res) => {
       );
     }
 
-    // Cart khali karo
     await db.query("DELETE FROM cart_items WHERE cart_id = $1", [cart.id]);
 
     res.status(201).json({ message: "Order place ho gaya!", orderId, total });
@@ -82,6 +81,23 @@ router.get("/seller", verifyToken, verifyRole("seller"), async (req, res) => {
       [req.user.id]
     );
     res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update order status (seller apne order ka status badal sakta hai)
+router.put("/:orderId/status", verifyToken, verifyRole("seller"), async (req, res) => {
+  try {
+    const { status } = req.body;
+    const allowedStatuses = ["pending", "completed", "shipped", "delivered", "cancelled"];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ error: "Galat status" });
+    }
+
+    await db.query("UPDATE orders SET status = $1 WHERE id = $2", [status, req.params.orderId]);
+    res.json({ message: "Order status update ho gaya" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

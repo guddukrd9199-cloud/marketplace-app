@@ -1,29 +1,29 @@
-const token = localStorage.getItem('token');
-const user = JSON.parse(localStorage.getItem('user'));
+const token = localStorage.getItem("token");
+const user = JSON.parse(localStorage.getItem("user"));
 
-if (!token || !user || user.role !== 'seller') {
-  window.location.href = '/login.html';
+if (!token || !user || user.role !== "seller") {
+  window.location.href = "/login.html";
 }
 
-document.getElementById('productForm').addEventListener('submit', async (e) => {
+document.getElementById("productForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const formData = new FormData();
-  formData.append('name', document.getElementById('title').value);
-  formData.append('description', document.getElementById('description').value);
-  formData.append('price', document.getElementById('price').value);
-  formData.append('location', document.getElementById('location').value);
+  formData.append("name", document.getElementById("title").value);
+  formData.append("description", document.getElementById("description").value);
+  formData.append("price", document.getElementById("price").value);
+  formData.append("location", document.getElementById("location").value);
 
-  const imageFile = document.getElementById('image').files[0];
+  const imageFile = document.getElementById("image").files[0];
   if (imageFile) {
-    formData.append('image', imageFile);
+    formData.append("image", imageFile);
   }
 
   try {
-    const res = await fetch('/api/products', {
-      method: 'POST',
+    const res = await fetch("/api/products", {
+      method: "POST",
       headers: {
-        'Authorization': 'Bearer ' + token
+        "Authorization": "Bearer " + token
       },
       body: formData
     });
@@ -31,40 +31,46 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
     const data = await res.json();
 
     if (res.ok) {
-      alert('Product add ho gaya! Admin approval ka wait karo.');
-      document.getElementById('productForm').reset();
+      alert("Product add ho gaya! Admin approval ka wait karo.");
+      document.getElementById("productForm").reset();
       loadMyProducts();
     } else {
-      alert('Error: ' + data.error);
+      alert("Error: " + data.error);
     }
   } catch (err) {
-    alert('Kuch galat ho gaya: ' + err.message);
+    alert("Kuch galat ho gaya: " + err.message);
   }
 });
 
 async function loadMyProducts() {
   try {
-    const res = await fetch('/api/products/my/list', {
+    const res = await fetch("/api/products/my/list", {
       headers: {
-        'Authorization': 'Bearer ' + token
+        "Authorization": "Bearer " + token
       }
     });
     const products = await res.json();
 
-    const container = document.getElementById('myProducts');
-    container.innerHTML = '';
+    const container = document.getElementById("myProducts");
+    container.innerHTML = "";
 
     if (products.length === 0) {
-      container.innerHTML = '<p>Abhi tak koi product add nahi kiya.</p>';
+      container.innerHTML = "<p>Abhi tak koi product add nahi kiya.</p>";
       return;
     }
 
     products.forEach(p => {
-      const div = document.createElement('div');
-      div.style.border = '1px solid #ccc';
-      div.style.padding = '10px';
-      div.style.marginBottom = '10px';
+      const div = document.createElement("div");
+      div.style.border = "1px solid #ccc";
+      div.style.padding = "10px";
+      div.style.marginBottom = "10px";
+
+      const imageTag = (p.images && p.images.length > 0)
+        ? `<img src="${p.images[0].image_path}" style="width:100px; height:100px; object-fit:cover; display:block; margin-bottom:8px;">`
+        : '';
+
       div.innerHTML = `
+        ${imageTag}
         <strong>${p.name}</strong> - ₹${p.price} <br>
         Status: ${p.status} <br>
         Location: ${p.location}
@@ -72,7 +78,7 @@ async function loadMyProducts() {
       container.appendChild(div);
     });
   } catch (err) {
-    document.getElementById('myProducts').innerHTML = '<p>Products load nahi ho paye.</p>';
+    document.getElementById("myProducts").innerHTML = "<p>Products load nahi ho paye.</p>";
   }
 }
 

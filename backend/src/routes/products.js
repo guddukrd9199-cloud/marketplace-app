@@ -4,7 +4,6 @@ const db = require("../config/db");
 const { verifyToken, verifyRole } = require("../middleware/auth");
 const upload = require("../middleware/upload");
 
-// GET all approved products (public)
 router.get("/", async (req, res) => {
   try {
     const result = await db.query("SELECT * FROM products WHERE status = 'approved'");
@@ -14,17 +13,20 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET seller's own products
 router.get("/my/list", verifyToken, verifyRole("seller"), async (req, res) => {
   try {
     const result = await db.query("SELECT * FROM products WHERE seller_id = $1", [req.user.id]);
-    res.json(result.rows);
+    const products = result.rows;
+    for (const product of products) {
+      const imagesResult = await db.query("SELECT * FROM product_images WHERE product_id = $1", [product.id]);
+      product.images = imagesResult.rows;
+    }
+    res.json(products);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET single product with images
 router.get("/:id", async (req, res) => {
   try {
     const productResult = await db.query("SELECT * FROM products WHERE id = $1", [req.params.id]);
@@ -40,18 +42,14 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// POST create product WITH image (ek saath)
 router.post("/", verifyToken, verifyRole("seller"), upload.single("image"), async (req, res) => {
   try {
     const { name, description, price, location } = req.body;
-
     const result = await db.query(
       "INSERT INTO products (name, description, price, location, seller_id, status) VALUES ($1, $2, $3, $4, $5, 'pending') RETURNING id",
       [name, description, price, location, req.user.id]
     );
-
     const productId = result.rows[0].id;
-
     if (req.file) {
       const imagePath = "/uploads/" + req.file.filename;
       await db.query(
@@ -59,14 +57,12 @@ router.post("/", verifyToken, verifyRole("seller"), upload.single("image"), asyn
         [productId, imagePath]
       );
     }
-
     res.json({ message: "Product create ho gaya", productId });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// POST upload additional image (alag se)
 router.post("/:id/upload-image", verifyToken, verifyRole("seller"), upload.single("image"), async (req, res) => {
   try {
     const imagePath = "/uploads/" + req.file.filename;
@@ -80,7 +76,6 @@ router.post("/:id/upload-image", verifyToken, verifyRole("seller"), upload.singl
   }
 });
 
-// PUT update product
 router.put("/:id", verifyToken, verifyRole("seller"), async (req, res) => {
   try {
     const productResult = await db.query("SELECT * FROM products WHERE id = $1", [req.params.id]);
@@ -91,20 +86,17 @@ router.put("/:id", verifyToken, verifyRole("seller"), async (req, res) => {
     if (product.seller_id !== req.user.id) {
       return res.status(403).json({ error: "Ye tumhara product nahi hai" });
     }
-
     const { name, description, price, location } = req.body;
     await db.query(
       "UPDATE products SET name = $1, description = $2, price = $3, location = $4 WHERE id = $5",
       [name, description, price, location, req.params.id]
     );
-
     res.json({ message: "Product update ho gaya" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// DELETE product
 router.delete("/:id", verifyToken, verifyRole("seller"), async (req, res) => {
   try {
     const productResult = await db.query("SELECT * FROM products WHERE id = $1", [req.params.id]);
@@ -115,7 +107,6 @@ router.delete("/:id", verifyToken, verifyRole("seller"), async (req, res) => {
     if (product.seller_id !== req.user.id) {
       return res.status(403).json({ error: "Ye tumhara product nahi hai" });
     }
-
     await db.query("DELETE FROM products WHERE id = $1", [req.params.id]);
     res.json({ message: "Product delete ho gaya" });
   } catch (err) {

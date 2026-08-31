@@ -82,4 +82,42 @@ async function loadMyProducts() {
   }
 }
 
+async function loadMyOrders() {
+  try {
+    const res = await fetch("/api/orders/seller", {
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    });
+    const orders = await res.json();
+
+    const container = document.getElementById("myOrders");
+    container.innerHTML = "";
+
+    if (!Array.isArray(orders) || orders.length === 0) {
+      container.innerHTML = "<p>Abhi tak koi order nahi hai.</p>";
+      return;
+    }
+
+    orders.forEach(o => {
+      const div = document.createElement("div");
+      div.style.border = "1px solid #ccc";
+      div.style.padding = "10px";
+      div.style.marginBottom = "10px";
+
+      div.innerHTML = `
+        <strong>${o.product_name}</strong> x ${o.quantity} <br>
+        Price: ₹${o.price} <br>
+        Order Status: ${o.order_status} <br>
+        Address: ${o.address || 'N/A'} <br>
+        Order Date: ${new Date(o.created_at).toLocaleDateString()}
+      `;
+      container.appendChild(div);
+    });
+  } catch (err) {
+    document.getElementById("myOrders").innerHTML = "<p>Orders load nahi ho paye.</p>";
+  }
+}
+
 loadMyProducts();
+loadMyOrders();

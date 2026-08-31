@@ -1,6 +1,6 @@
 const express = require("express");
 const db = require("../config/db");
-const { verifyToken } = require("../middleware/auth");
+const { verifyToken, verifyRole } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -58,6 +58,27 @@ router.get("/my", verifyToken, async (req, res) => {
   try {
     const result = await db.query(
       "SELECT * FROM orders WHERE buyer_id = $1 ORDER BY created_at DESC",
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET seller's orders (jinke products bike hain)
+router.get("/seller", verifyToken, verifyRole("seller"), async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT order_items.id, order_items.order_id, order_items.product_id,
+              order_items.quantity, order_items.price,
+              products.name AS product_name,
+              orders.status AS order_status, orders.address, orders.created_at
+       FROM order_items
+       JOIN products ON order_items.product_id = products.id
+       JOIN orders ON order_items.order_id = orders.id
+       WHERE order_items.seller_id = $1
+       ORDER BY orders.created_at DESC`,
       [req.user.id]
     );
     res.json(result.rows);

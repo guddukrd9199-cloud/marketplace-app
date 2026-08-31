@@ -1,17 +1,15 @@
 const token = localStorage.getItem('token');
 const user = JSON.parse(localStorage.getItem('user'));
 
-// Guard: sirf seller access kar sakta hai
 if (!token || !user || user.role !== 'seller') {
   window.location.href = '/login.html';
 }
 
-// Product form submit — title, description, price, location, image sab ek saath
 document.getElementById('productForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const formData = new FormData();
-  formData.append('title', document.getElementById('title').value);
+  formData.append('name', document.getElementById('title').value);
   formData.append('description', document.getElementById('description').value);
   formData.append('price', document.getElementById('price').value);
   formData.append('location', document.getElementById('location').value);
@@ -44,7 +42,6 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
   }
 });
 
-// Seller ke apne products load karo
 async function loadMyProducts() {
   try {
     const res = await fetch('/api/products/my/list', {
@@ -68,7 +65,7 @@ async function loadMyProducts() {
       div.style.padding = '10px';
       div.style.marginBottom = '10px';
       div.innerHTML = `
-        <strong>${p.title}</strong> - ₹${p.price} <br>
+        <strong>${p.name}</strong> - ₹${p.price} <br>
         Status: ${p.status} <br>
         Location: ${p.location}
       `;

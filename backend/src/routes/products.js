@@ -42,15 +42,14 @@ router.get('/:id', (req, res) => {
 // POST create product WITH image (ek saath)
 router.post('/', verifyToken, verifyRole('seller'), upload.single('image'), (req, res) => {
   try {
-    const { title, description, price, location } = req.body;
+    const { name, description, price, location } = req.body;
 
     const result = db.prepare(
-      "INSERT INTO products (title, description, price, location, seller_id, status) VALUES (?, ?, ?, ?, ?, 'pending')"
-    ).run(title, description, price, location, req.user.id);
+      "INSERT INTO products (name, description, price, location, seller_id, status) VALUES (?, ?, ?, ?, ?, 'pending')"
+    ).run(name, description, price, location, req.user.id);
 
     const productId = result.lastInsertRowid;
 
-    // Agar image aayi hai to usko bhi save karo
     if (req.file) {
       const imagePath = '/uploads/' + req.file.filename;
       db.prepare(
@@ -64,7 +63,7 @@ router.post('/', verifyToken, verifyRole('seller'), upload.single('image'), (req
   }
 });
 
-// POST upload additional image (alag se, agar chahiye to)
+// POST upload additional image (alag se)
 router.post('/:id/upload-image', verifyToken, verifyRole('seller'), upload.single('image'), (req, res) => {
   try {
     const imagePath = '/uploads/' + req.file.filename;
@@ -88,10 +87,10 @@ router.put('/:id', verifyToken, verifyRole('seller'), (req, res) => {
       return res.status(403).json({ error: 'Ye tumhara product nahi hai' });
     }
 
-    const { title, description, price, location } = req.body;
+    const { name, description, price, location } = req.body;
     db.prepare(
-      "UPDATE products SET title = ?, description = ?, price = ?, location = ? WHERE id = ?"
-    ).run(title, description, price, location, req.params.id);
+      "UPDATE products SET name = ?, description = ?, price = ?, location = ? WHERE id = ?"
+    ).run(name, description, price, location, req.params.id);
 
     res.json({ message: 'Product update ho gaya' });
   } catch (err) {

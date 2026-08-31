@@ -1,64 +1,69 @@
-const express = require('express');
-const db = require('../config/db');
-const { verifyToken } = require('../middleware/auth');
+const express = require("express");
+const db = require("../config/db");
+const { verifyToken } = require("../middleware/auth");
 
 const router = express.Router();
 
 // CHECKOUT (cart se order banao)
-router.post('/checkout', verifyToken, (req, res) => {
+router.post("/checkout", verifyToken, async (req, res) => {
   try {
     const { address } = req.body;
-    const cart = db.prepare('SELECT * FROM carts WHERE user_id = ?').get(req.user.id);
+    const cartResult = await db.query("SELECT * FROM carts WHERE user_id = $1", [req.user.id]);
+    const cart = cartResult.rows[0];
 
     if (!cart) {
-      return res.status(400).json({ error: 'Cart khali hai' });
+      return res.status(400).json({ error: "Cart khali hai" });
     }
 
-    const items = db.prepare(`
-      SELECT cart_items.*, products.price, products.seller_id, products.stock, products.name
-      FROM cart_items
-      JOIN products ON cart_items.product_id = products.id
-      WHERE cart_items.cart_id = ?
-    `).all(cart.id);
+    const itemsResult = await db.query(
+      `SELECT cart_items.*, products.price, products.seller_id, products.stock, products.name
+       FROM cart_items
+       JOIN products ON cart_items.product_id = products.id
+       WHERE cart_items.cart_id = $1`,
+      [cart.id]
+    );
+    const items = itemsResult.rows;
 
     if (items.length === 0) {
-      return res.status(400).json({ error: 'Cart khali hai' });
+      return res.status(400).json({ error: "Cart khali hai" });
     }
 
     let total = 0;
     items.forEach(item => { total += item.price * item.quantity; });
 
-    const orderInsert = db.prepare(
-      'INSERT INTO orders (buyer_id, total_amount, status, address) VALUES (?, ?, ?, ?)'
+    const orderInsert = await db.query(
+      "INSERT INTO orders (buyer_id, total_amount, status, address) VALUES ($1, $2, $3, $4) RETURNING id",
+      [req.user.id, total, "pending", address || ""]
     );
-    const orderResult = orderInsert.run(req.user.id, total, 'pending', address || '');
-    const orderId = orderResult.lastInsertRowid;
+    const orderId = orderInsert.rows[0].id;
 
-    const itemInsert = db.prepare(
-      'INSERT INTO order_items (order_id, product_id, seller_id, quantity, price) VALUES (?, ?, ?, ?, ?)'
-    );
-    items.forEach(item => {
-      itemInsert.run(orderId, item.product_id, item.seller_id, item.quantity, item.price);
-    });
+    for (const item of items) {
+      await db.query(
+        "INSERT INTO order_items (order_id, product_id, seller_id, quantity, price) VALUES ($1, $2, $3, $4, $5)",
+        [orderId, item.product_id, item.seller_id, item.quantity, item.price]
+      );
+    }
 
     // Cart khali karo
-    db.prepare('DELETE FROM cart_items WHERE cart_id = ?').run(cart.id);
+    await db.query("DELETE FROM cart_items WHERE cart_id = $1", [cart.id]);
 
-    res.status(201).json({ message: 'Order place ho gaya!', orderId, total });
+    res.status(201).json({ message: "Order place ho gaya!", orderId, total });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 // GET buyer's own orders
-router.get('/my', verifyToken, (req, res) => {
+router.get("/my", verifyToken, async (req, res) => {
   try {
-    const orders = db.prepare('SELECT * FROM orders WHERE buyer_id = ? ORDER BY created_at DESC').all(req.user.id);
-    res.json(orders);
+    const result = await db.query(
+      "SELECT * FROM orders WHERE buyer_id = $1 ORDER BY created_at DESC",
+      [req.user.id]
+    );
+    res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 module.exports = router;
-

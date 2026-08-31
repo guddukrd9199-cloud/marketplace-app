@@ -1,9 +1,9 @@
 const express = require('express');
+const router = express.Router();
 const db = require('../config/db');
 const { verifyToken, verifyRole } = require('../middleware/auth');
 
-const router = express.Router();
-
+// GET pending products (admin only)
 router.get('/products/pending', verifyToken, verifyRole('admin'), (req, res) => {
   try {
     const products = db.prepare("SELECT * FROM products WHERE status = 'pending'").all();
@@ -13,12 +13,9 @@ router.get('/products/pending', verifyToken, verifyRole('admin'), (req, res) => 
   }
 });
 
+// PUT approve product (admin only)
 router.put('/products/:id/approve', verifyToken, verifyRole('admin'), (req, res) => {
   try {
-    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-    if (!product) {
-      return res.status(404).json({ error: 'Product nahi mila' });
-    }
     db.prepare("UPDATE products SET status = 'approved' WHERE id = ?").run(req.params.id);
     res.json({ message: 'Product approve ho gaya' });
   } catch (err) {
@@ -26,12 +23,9 @@ router.put('/products/:id/approve', verifyToken, verifyRole('admin'), (req, res)
   }
 });
 
+// PUT reject product (admin only)
 router.put('/products/:id/reject', verifyToken, verifyRole('admin'), (req, res) => {
   try {
-    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-    if (!product) {
-      return res.status(404).json({ error: 'Product nahi mila' });
-    }
     db.prepare("UPDATE products SET status = 'rejected' WHERE id = ?").run(req.params.id);
     res.json({ message: 'Product reject ho gaya' });
   } catch (err) {
@@ -39,10 +33,21 @@ router.put('/products/:id/reject', verifyToken, verifyRole('admin'), (req, res) 
   }
 });
 
+// GET all users (admin only)
 router.get('/users', verifyToken, verifyRole('admin'), (req, res) => {
   try {
-    const users = db.prepare('SELECT id, name, email, role, created_at FROM users').all();
+    const users = db.prepare("SELECT id, name, email, role FROM users").all();
     res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// TEMPORARY - Make user admin by email (ISKO BAAD MEIN HATA DENGE)
+router.get('/make-admin/:email', (req, res) => {
+  try {
+    db.prepare("UPDATE users SET role = 'admin' WHERE email = ?").run(req.params.email);
+    res.json({ message: 'User ab admin ban gaya' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

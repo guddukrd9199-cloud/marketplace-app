@@ -1,10 +1,19 @@
 const token = localStorage.getItem("token");
-if (!token) {
-  window.location.href = "/login.html";
-}
 
 async function loadProducts() {
   const container = document.getElementById("product-list");
+
+  if (!token) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:40px;">
+        <p style="font-size:18px; margin-bottom:20px;">Products dekhne ke liye pehle login ya register karo</p>
+        <a href="/login.html" style="background:#2c7be5;color:white;border:none;padding:10px 20px;border-radius:5px;text-decoration:none;margin-right:10px;">Login</a>
+        <a href="/register.html" style="background:#28a745;color:white;border:none;padding:10px 20px;border-radius:5px;text-decoration:none;">Register</a>
+      </div>
+    `;
+    return;
+  }
+
   try {
     const res = await fetch('/api/products');
     const products = await res.json();

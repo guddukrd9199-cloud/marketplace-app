@@ -1,11 +1,16 @@
+const token = localStorage.getItem("token");
+if (!token) {
+  window.location.href = "/login.html";
+}
+
 async function loadProducts() {
-  const container = document.getElementById('product-list');
+  const container = document.getElementById("product-list");
   try {
     const res = await fetch('/api/products');
     const products = await res.json();
 
     if (products.length === 0) {
-      container.innerHTML = '<p>Koi product available nahi hai.</p>';
+      container.innerHTML = "<p>Koi product available nahi hai.</p>";
       return;
     }
 
@@ -34,12 +39,11 @@ async function loadProducts() {
       </div>
     `).join('');
   } catch (err) {
-    container.innerHTML = '<p>Products load nahi ho paye.</p>';
+    container.innerHTML = "<p>Products load nahi ho paye.</p>";
   }
 }
 
 async function addToCart(productId) {
-  const token = localStorage.getItem('token');
   if (!token) {
     alert('Pehle login karo!');
     window.location.href = '/login.html';

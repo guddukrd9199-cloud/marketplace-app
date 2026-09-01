@@ -70,6 +70,29 @@ router.get("/my", verifyToken, async (req, res) => {
   }
 });
 
+// PUT cancel order (buyer khud apna order cancel kar sakta hai, sirf pending status mein)
+router.put("/:orderId/cancel", verifyToken, async (req, res) => {
+  try {
+    const orderResult = await db.query("SELECT * FROM orders WHERE id = $1", [req.params.orderId]);
+    const order = orderResult.rows[0];
+
+    if (!order) {
+      return res.status(404).json({ error: "Order nahi mila" });
+    }
+    if (order.buyer_id !== req.user.id) {
+      return res.status(403).json({ error: "Ye tumhara order nahi hai" });
+    }
+    if (order.status !== "pending") {
+      return res.status(400).json({ error: "Ye order ab cancel nahi ho sakta (status: " + order.status + ")" });
+    }
+
+    await db.query("UPDATE orders SET status = 'cancelled' WHERE id = $1", [req.params.orderId]);
+    res.json({ message: "Order cancel ho gaya" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET seller's orders (jinke products bike hain)
 router.get("/seller", verifyToken, verifyRole("seller"), async (req, res) => {
   try {

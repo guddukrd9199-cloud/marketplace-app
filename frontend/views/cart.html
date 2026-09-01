@@ -26,7 +26,13 @@
 
     <div style="margin-top:15px;">
       <input type="text" id="address" placeholder="Delivery Address" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:5px;">
-      <button onclick="checkout()" style="background:green;color:white;border:none;padding:12px;border-radius:5px;margin-top:10px;width:100%;">Order Place Karo</button>
+
+      <div style="margin-top:15px;padding:12px;background:#f0f8f0;border:1px solid #28a745;border-radius:5px;">
+        <p style="margin:0;font-weight:bold;">💵 Payment Method: Cash on Delivery (COD)</p>
+        <p style="margin:5px 0 0 0;font-size:14px;color:#555;">Order milte waqt cash pay karo. Online payment jald hi aa raha hai.</p>
+      </div>
+
+      <button onclick="checkout()" style="background:green;color:white;border:none;padding:12px;border-radius:5px;margin-top:10px;width:100%;">Order Place Karo (COD)</button>
     </div>
     <p id="message" style="margin-top:10px;"></p>
   </main>
@@ -35,4 +41,3 @@
   <script src="/js/cart.js"></script>
 </body>
 </html>
-

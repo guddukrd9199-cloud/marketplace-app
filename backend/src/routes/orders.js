@@ -44,9 +44,15 @@ router.post("/checkout", verifyToken, async (req, res) => {
       );
     }
 
+    // Payment record banao (COD)
+    await db.query(
+      "INSERT INTO payments (order_id, amount, method, status) VALUES ($1, $2, $3, $4)",
+      [orderId, total, "cod", "pending"]
+    );
+
     await db.query("DELETE FROM cart_items WHERE cart_id = $1", [cart.id]);
 
-    res.status(201).json({ message: "Order place ho gaya!", orderId, total });
+    res.status(201).json({ message: "Order place ho gaya! Cash on Delivery.", orderId, total });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

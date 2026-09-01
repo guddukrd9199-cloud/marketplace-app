@@ -1,4 +1,4 @@
-const express = require("express");
+kconst express = require("express");
 const db = require("../config/db");
 const { verifyToken, verifyRole } = require("../middleware/auth");
 
@@ -7,7 +7,7 @@ const router = express.Router();
 // CHECKOUT (cart se order banao)
 router.post("/checkout", verifyToken, async (req, res) => {
   try {
-    const { address } = req.body;
+    const { address, latitude, longitude } = req.body;
     const cartResult = await db.query("SELECT * FROM carts WHERE user_id = $1", [req.user.id]);
     const cart = cartResult.rows[0];
 
@@ -32,8 +32,8 @@ router.post("/checkout", verifyToken, async (req, res) => {
     items.forEach(item => { total += item.price * item.quantity; });
 
     const orderInsert = await db.query(
-      "INSERT INTO orders (buyer_id, total_amount, status, address) VALUES ($1, $2, $3, $4) RETURNING id",
-      [req.user.id, total, "pending", address || ""]
+      "INSERT INTO orders (buyer_id, total_amount, status, address, latitude, longitude) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+      [req.user.id, total, "pending", address || "", latitude || null, longitude || null]
     );
     const orderId = orderInsert.rows[0].id;
 
@@ -44,7 +44,6 @@ router.post("/checkout", verifyToken, async (req, res) => {
       );
     }
 
-    // Payment record banao (COD)
     await db.query(
       "INSERT INTO payments (order_id, amount, method, status) VALUES ($1, $2, $3, $4)",
       [orderId, total, "cod", "pending"]
@@ -85,6 +84,21 @@ router.get("/seller", verifyToken, verifyRole("seller"), async (req, res) => {
        WHERE order_items.seller_id = $1
        ORDER BY orders.created_at DESC`,
       [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET all orders with location (admin only)
+router.get("/all", verifyToken, verifyRole("admin"), async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT orders.*, users.name AS buyer_name, users.email AS buyer_email
+       FROM orders
+       JOIN users ON orders.buyer_id = users.id
+       ORDER BY orders.created_at DESC`
     );
     res.json(result.rows);
   } catch (err) {

@@ -52,6 +52,26 @@ async function removeItem(itemId) {
   }
 }
 
+function getLocation() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve({ latitude: null, longitude: null });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        });
+      },
+      () => {
+        resolve({ latitude: null, longitude: null });
+      }
+    );
+  });
+}
+
 async function checkout() {
   const address = document.getElementById("address").value;
   const message = document.getElementById("message");
@@ -62,6 +82,11 @@ async function checkout() {
     return;
   }
 
+  message.style.color = "black";
+  message.textContent = "Location detect ho raha hai...";
+
+  const location = await getLocation();
+
   try {
     const res = await fetch("/api/orders/checkout", {
       method: "POST",
@@ -69,7 +94,11 @@ async function checkout() {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + token
       },
-      body: JSON.stringify({ address })
+      body: JSON.stringify({
+        address,
+        latitude: location.latitude,
+        longitude: location.longitude
+      })
     });
     const data = await res.json();
 

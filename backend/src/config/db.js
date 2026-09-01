@@ -24,6 +24,11 @@ async function initDb() {
     } else {
       console.log('Tables already exist hain, sab theek hai.');
     }
+
+    // Naye columns add karo agar nahi hain (existing database ke liye)
+    await pool.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS latitude REAL");
+    await pool.query("ALTER TABLE orders ADD COLUMN IF NOT EXISTS longitude REAL");
+    console.log('Location columns check ho gaye.');
   } catch (err) {
     console.error('Database init error:', err);
   }

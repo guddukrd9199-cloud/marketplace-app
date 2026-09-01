@@ -6,6 +6,41 @@ if (!token || !user || user.role !== "admin") {
   window.location.href = "/login.html";
 }
 
+async function loadAllOrders() {
+  const container = document.getElementById("all-orders");
+  try {
+    const res = await fetch("/api/orders/all", {
+      headers: { "Authorization": "Bearer " + token }
+    });
+    const orders = await res.json();
+
+    if (!Array.isArray(orders) || orders.length === 0) {
+      container.innerHTML = "<p>Koi order nahi hai.</p>";
+      return;
+    }
+
+    container.innerHTML = orders.map(o => {
+      const mapLink = (o.latitude && o.longitude)
+        ? `<a href="https://www.google.com/maps?q=${o.latitude},${o.longitude}" target="_blank" style="color:#2c7be5;">📍 Location Dekho (Map)</a>`
+        : `<span style="color:#999;">Location nahi mili</span>`;
+
+      return `
+        <div class="product-card" style="margin-bottom:10px;">
+          <h3>Order #${o.id}</h3>
+          <p><b>Buyer:</b> ${o.buyer_name} (${o.buyer_email})</p>
+          <p><b>Address:</b> ${o.address || 'N/A'}</p>
+          <p>${mapLink}</p>
+          <p><b>Total:</b> ₹${o.total_amount}</p>
+          <p><b>Status:</b> ${o.status}</p>
+          <p><b>Date:</b> ${new Date(o.created_at).toLocaleString()}</p>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    container.innerHTML = "<p>Load nahi ho paya.</p>";
+  }
+}
+
 async function loadPendingProducts() {
   const container = document.getElementById("pending-products");
   try {
@@ -99,6 +134,7 @@ async function loadUsers() {
   }
 }
 
+loadAllOrders();
 loadPendingProducts();
 loadAllProducts();
 loadUsers();

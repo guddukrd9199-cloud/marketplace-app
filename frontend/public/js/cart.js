@@ -1,23 +1,23 @@
-const token = localStorage.getItem('token');
+const token = localStorage.getItem("token");
 
 if (!token) {
-  alert('Pehle login karo!');
-  window.location.href = '/login.html';
+  alert("Pehle login karo!");
+  window.location.href = "/login.html";
 }
 
 async function loadCart() {
-  const container = document.getElementById('cart-items');
-  const totalEl = document.getElementById('cart-total');
+  const container = document.getElementById("cart-items");
+  const totalEl = document.getElementById("cart-total");
 
   try {
-    const res = await fetch('/api/cart', {
-      headers: { 'Authorization': 'Bearer ' + token }
+    const res = await fetch("/api/cart", {
+      headers: { "Authorization": "Bearer " + token }
     });
     const items = await res.json();
 
     if (!Array.isArray(items) || items.length === 0) {
-      container.innerHTML = '<p>Cart khali hai.</p>';
-      totalEl.textContent = '';
+      container.innerHTML = "<p>Cart khali hai.</p>";
+      totalEl.textContent = "";
       return;
     }
 
@@ -36,50 +36,55 @@ async function loadCart() {
 
     totalEl.textContent = `Total: ₹${total}`;
   } catch (err) {
-    container.innerHTML = '<p>Load nahi ho paya.</p>';
+    container.innerHTML = "<p>Load nahi ho paya.</p>";
   }
 }
 
 async function removeItem(itemId) {
-  await fetch(`/api/cart/${itemId}`, {
-    method: 'DELETE',
-    headers: { 'Authorization': 'Bearer ' + token }
-  });
-  loadCart();
+  try {
+    await fetch(`/api/cart/${itemId}`, {
+      method: "DELETE",
+      headers: { "Authorization": "Bearer " + token }
+    });
+    loadCart();
+  } catch (err) {
+    alert("Kuch galat hua");
+  }
 }
 
 async function checkout() {
-  const address = document.getElementById('address').value;
-  const message = document.getElementById('message');
+  const address = document.getElementById("address").value;
+  const message = document.getElementById("message");
 
   if (!address) {
-    message.style.color = 'red';
-    message.textContent = 'Address zaroori hai';
+    message.style.color = "red";
+    message.textContent = "Address zaroori hai";
     return;
   }
 
   try {
-    const res = await fetch('/api/orders/checkout', {
-      method: 'POST',
+    const res = await fetch("/api/orders/checkout", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + token
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
       },
       body: JSON.stringify({ address })
     });
     const data = await res.json();
 
     if (res.ok) {
-      message.style.color = 'green';
+      message.style.color = "green";
       message.textContent = `Order place ho gaya! Order ID: ${data.orderId}, Total: ₹${data.total}`;
       loadCart();
+      setTimeout(() => { window.location.href = "/my-orders.html"; }, 1500);
     } else {
-      message.style.color = 'red';
+      message.style.color = "red";
       message.textContent = data.error;
     }
   } catch (err) {
-    message.style.color = 'red';
-    message.textContent = 'Kuch galat hua';
+    message.style.color = "red";
+    message.textContent = "Kuch galat hua";
   }
 }
 

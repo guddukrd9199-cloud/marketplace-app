@@ -3,11 +3,14 @@ const db = require("../config/db");
 const { verifyToken, verifyRole } = require("../middleware/auth");
 
 const router = express.Router();
+const SELLER_UPI_ID = "shivmkr00@nyes";
 
 // CHECKOUT (cart se order banao)
 router.post("/checkout", verifyToken, async (req, res) => {
   try {
-    const { address, latitude, longitude } = req.body;
+    const { address, latitude, longitude, paymentMethod } = req.body;
+    const method = paymentMethod === "upi" ? "upi" : "cod";
+
     const cartResult = await db.query("SELECT * FROM carts WHERE user_id = $1", [req.user.id]);
     const cart = cartResult.rows[0];
 
@@ -46,12 +49,18 @@ router.post("/checkout", verifyToken, async (req, res) => {
 
     await db.query(
       "INSERT INTO payments (order_id, amount, method, status) VALUES ($1, $2, $3, $4)",
-      [orderId, total, "cod", "pending"]
+      [orderId, total, method, "pending"]
     );
 
     await db.query("DELETE FROM cart_items WHERE cart_id = $1", [cart.id]);
 
-    res.status(201).json({ message: "Order place ho gaya! Cash on Delivery.", orderId, total });
+    res.status(201).json({
+      message: method === "upi" ? "Order place ho gaya! UPI se payment karo." : "Order place ho gaya! Cash on Delivery.",
+      orderId,
+      total,
+      method,
+      upiId: method === "upi" ? SELLER_UPI_ID : null
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -61,10 +70,30 @@ router.post("/checkout", verifyToken, async (req, res) => {
 router.get("/my", verifyToken, async (req, res) => {
   try {
     const result = await db.query(
-      "SELECT * FROM orders WHERE buyer_id = $1 ORDER BY created_at DESC",
+      `SELECT orders.*, payments.method AS payment_method, payments.status AS payment_status
+       FROM orders
+       LEFT JOIN payments ON payments.order_id = orders.id
+       WHERE orders.buyer_id = $1
+       ORDER BY orders.created_at DESC`,
       [req.user.id]
     );
     res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT buyer marks "Maine payment kar diya" (UPI order ke liye)
+router.put("/:orderId/mark-paid", verifyToken, async (req, res) => {
+  try {
+    const orderResult = await db.query("SELECT * FROM orders WHERE id = $1", [req.params.orderId]);
+    const order = orderResult.rows[0];
+    if (!order || order.buyer_id !== req.user.id) {
+      return res.status(403).json({ error: "Ye tumhara order nahi hai" });
+    }
+
+    await db.query("UPDATE payments SET status = 'verification_pending' WHERE order_id = $1", [req.params.orderId]);
+    res.json({ message: "Payment status update ho gaya, verification ka wait karo" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -114,16 +143,28 @@ router.get("/seller", verifyToken, verifyRole("seller"), async (req, res) => {
   }
 });
 
-// GET all orders with location (admin only)
+// GET all orders with location aur payment status (admin only)
 router.get("/all", verifyToken, verifyRole("admin"), async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT orders.*, users.name AS buyer_name, users.email AS buyer_email
+      `SELECT orders.*, users.name AS buyer_name, users.email AS buyer_email,
+              payments.method AS payment_method, payments.status AS payment_status
        FROM orders
        JOIN users ON orders.buyer_id = users.id
+       LEFT JOIN payments ON payments.order_id = orders.id
        ORDER BY orders.created_at DESC`
     );
     res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT admin confirms UPI payment
+router.put("/:orderId/confirm-payment", verifyToken, verifyRole("admin"), async (req, res) => {
+  try {
+    await db.query("UPDATE payments SET status = 'confirmed' WHERE order_id = $1", [req.params.orderId]);
+    res.json({ message: "Payment confirm ho gaya" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

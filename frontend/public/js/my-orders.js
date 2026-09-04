@@ -23,11 +23,16 @@ async function loadOrders() {
         ? `<button onclick="cancelOrder(${o.id})" style="background:red;color:white;border:none;padding:8px;border-radius:5px;margin-top:8px;width:100%;">Order Cancel Karo</button>`
         : '';
 
+      const paymentInfo = o.payment_method === "upi"
+        ? `<p>Payment: UPI - <b>${o.payment_status}</b></p>`
+        : `<p>Payment: Cash on Delivery</p>`;
+
       return `
         <div class="product-card" style="margin-bottom:10px;">
           <h3>Order #${o.id}</h3>
           <p>Status: ${o.status}</p>
           <p>Address: ${o.address}</p>
+          ${paymentInfo}
           <p class="price">Total: ₹${o.total_amount}</p>
           ${cancelButton}
         </div>

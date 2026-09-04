@@ -24,6 +24,11 @@ async function loadAllOrders() {
         ? `<a href="https://www.google.com/maps?q=${o.latitude},${o.longitude}" target="_blank" style="color:#2c7be5;">📍 Location Dekho (Map)</a>`
         : `<span style="color:#999;">Location nahi mili</span>`;
 
+      const paymentSection = o.payment_method === "upi"
+        ? `<p><b>Payment:</b> UPI - ${o.payment_status}</p>
+           ${o.payment_status !== "confirmed" ? `<button onclick="confirmPayment(${o.id})" style="background:#2c7be5;color:white;border:none;padding:8px;border-radius:5px;margin-top:5px;width:100%;">Payment Confirm Karo</button>` : ''}`
+        : `<p><b>Payment:</b> Cash on Delivery</p>`;
+
       return `
         <div class="product-card" style="margin-bottom:10px;">
           <h3>Order #${o.id}</h3>
@@ -32,12 +37,26 @@ async function loadAllOrders() {
           <p>${mapLink}</p>
           <p><b>Total:</b> ₹${o.total_amount}</p>
           <p><b>Status:</b> ${o.status}</p>
+          ${paymentSection}
           <p><b>Date:</b> ${new Date(o.created_at).toLocaleString()}</p>
         </div>
       `;
     }).join('');
   } catch (err) {
     container.innerHTML = "<p>Load nahi ho paya.</p>";
+  }
+}
+
+async function confirmPayment(orderId) {
+  if (!confirm("Kya aapko UPI app mein payment mil gaya hai?")) return;
+  try {
+    await fetch(`/api/orders/${orderId}/confirm-payment`, {
+      method: "PUT",
+      headers: { "Authorization": "Bearer " + token }
+    });
+    loadAllOrders();
+  } catch (err) {
+    alert("Kuch galat hua");
   }
 }
 

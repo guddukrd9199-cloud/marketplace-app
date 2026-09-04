@@ -74,7 +74,9 @@ function getLocation() {
 
 async function checkout() {
   const address = document.getElementById("address").value;
+  const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
   const message = document.getElementById("message");
+  const upiInfo = document.getElementById("upi-info");
 
   if (!address) {
     message.style.color = "red";
@@ -84,6 +86,7 @@ async function checkout() {
 
   message.style.color = "black";
   message.textContent = "Location detect ho raha hai...";
+  upiInfo.innerHTML = "";
 
   const location = await getLocation();
 
@@ -97,16 +100,31 @@ async function checkout() {
       body: JSON.stringify({
         address,
         latitude: location.latitude,
-        longitude: location.longitude
+        longitude: location.longitude,
+        paymentMethod
       })
     });
     const data = await res.json();
 
     if (res.ok) {
       message.style.color = "green";
-      message.textContent = `Order place ho gaya! Order ID: ${data.orderId}, Total: ₹${data.total}`;
-      loadCart();
-      setTimeout(() => { window.location.href = "/my-orders.html"; }, 1500);
+
+      if (data.method === "upi") {
+        message.textContent = `Order place ho gaya! Order ID: ${data.orderId}, Total: ₹${data.total}`;
+        upiInfo.innerHTML = `
+          <div style="padding:15px;background:#f0f8f0;border:1px solid #28a745;border-radius:5px;">
+            <p style="font-weight:bold;margin:0 0 8px 0;">📱 UPI Payment Karo:</p>
+            <p style="margin:0 0 8px 0;">UPI ID: <b>${data.upiId}</b></p>
+            <p style="margin:0 0 12px 0;">Amount: ₹${data.total}</p>
+            <button onclick="markPaid(${data.orderId})" style="background:#2c7be5;color:white;border:none;padding:10px;border-radius:5px;width:100%;">Maine Payment Kar Diya</button>
+          </div>
+        `;
+        loadCart();
+      } else {
+        message.textContent = `Order place ho gaya! Order ID: ${data.orderId}, Total: ₹${data.total}`;
+        loadCart();
+        setTimeout(() => { window.location.href = "/my-orders.html"; }, 1500);
+      }
     } else {
       message.style.color = "red";
       message.textContent = data.error;
@@ -114,6 +132,21 @@ async function checkout() {
   } catch (err) {
     message.style.color = "red";
     message.textContent = "Kuch galat hua";
+  }
+}
+
+async function markPaid(orderId) {
+  try {
+    const res = await fetch(`/api/orders/${orderId}/mark-paid`, {
+      method: "PUT",
+      headers: { "Authorization": "Bearer " + token }
+    });
+    if (res.ok) {
+      alert("Payment status update ho gaya! Verification ka wait karo.");
+      window.location.href = "/my-orders.html";
+    }
+  } catch (err) {
+    alert("Kuch galat hua");
   }
 }
 

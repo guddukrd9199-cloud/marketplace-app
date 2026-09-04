@@ -14,3 +14,36 @@
       <a href="/login.html">Login</a>
       <a href="/register.html">Register</a>
     </nav>
+  </header>
+
+  <main>
+    <h2>Mera Cart</h2>
+    <div id="cart-items">
+      <p>Loading...</p>
+    </div>
+
+    <h3 id="cart-total" style="margin-top:15px;"></h3>
+
+    <div style="margin-top:15px;">
+      <input type="text" id="address" placeholder="Delivery Address" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:5px;">
+
+      <div style="margin-top:15px;">
+        <p style="font-weight:bold;margin-bottom:8px;">Payment Method Choose Karo:</p>
+        <label style="display:block;margin-bottom:8px;padding:10px;border:1px solid #ccc;border-radius:5px;">
+          <input type="radio" name="paymentMethod" value="cod" checked> 💵 Cash on Delivery (COD)
+        </label>
+        <label style="display:block;padding:10px;border:1px solid #ccc;border-radius:5px;">
+          <input type="radio" name="paymentMethod" value="upi"> 📱 Online Payment (UPI)
+        </label>
+      </div>
+
+      <button onclick="checkout()" style="background:green;color:white;border:none;padding:12px;border-radius:5px;margin-top:15px;width:100%;">Order Place Karo</button>
+    </div>
+    <div id="upi-info" style="margin-top:15px;"></div>
+    <p id="message" style="margin-top:10px;"></p>
+  </main>
+
+  <script src="/js/navbar.js"></script>
+  <script src="/js/cart.js"></script>
+</body>
+</html>
